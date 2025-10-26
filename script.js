@@ -42,6 +42,9 @@ window.addEventListener('DOMContentLoaded', () => {
     loadSavedSettings();
     checkAuthState();
     
+    // Check mobile compatibility
+    checkMobileCompatibility();
+    
     // Auto-save user data before page unload
     window.addEventListener('beforeunload', () => {
         saveAllUserData();
@@ -149,20 +152,56 @@ function setupEventListeners() {
 // ============================================
 
 function checkAuthState() {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-        state.currentUser = JSON.parse(savedUser);
-        // Hide splash screen immediately for returning users
-        document.getElementById('splash-screen').classList.add('hidden');
-        // Skip welcome screen for returning users
-        showChatApp();
-        loadChats();
+    // Check if Firebase is enabled
+    if (typeof FirebaseService !== 'undefined' && window.firebaseAuth) {
+        // Use Firebase Authentication
+        FirebaseService.onAuthStateChanged(async (user) => {
+            if (user) {
+                // User is signed in
+                try {
+                    const userData = await FirebaseService.get(`users/${user.uid}`);
+                    state.currentUser = {
+                        id: user.uid,
+                        email: user.email,
+                        username: userData?.username || user.email.split('@')[0],
+                        avatar: userData?.avatar || generateAvatarUrl(user.email)
+                    };
+                    
+                    document.getElementById('splash-screen').classList.add('hidden');
+                    showChatApp();
+                    loadChats();
+                } catch (error) {
+                    console.error('Failed to load user data:', error);
+                    document.getElementById('auth-container').classList.remove('hidden');
+                }
+            } else {
+                // User is signed out - check localStorage fallback
+                const savedUser = localStorage.getItem('currentUser');
+                if (savedUser) {
+                    state.currentUser = JSON.parse(savedUser);
+                    document.getElementById('splash-screen').classList.add('hidden');
+                    showChatApp();
+                    loadChats();
+                } else {
+                    document.getElementById('auth-container').classList.remove('hidden');
+                }
+            }
+        });
     } else {
-        document.getElementById('auth-container').classList.remove('hidden');
+        // Fallback to localStorage for local-only mode
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            state.currentUser = JSON.parse(savedUser);
+            document.getElementById('splash-screen').classList.add('hidden');
+            showChatApp();
+            loadChats();
+        } else {
+            document.getElementById('auth-container').classList.remove('hidden');
+        }
     }
 }
 
-function handleLogin(e) {
+async function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
@@ -174,35 +213,65 @@ function handleLogin(e) {
         return;
     }
     
-    // Simulate login (in real app, this would be an API call)
-    const mockUser = {
-        id: Date.now(),
-        email: email,
-        username: email.split('@')[0],
-        avatar: generateAvatarUrl(email)
-    };
-    
-    state.currentUser = mockUser;
-    
-    // Always save to localStorage for persistent login
-    localStorage.setItem('currentUser', JSON.stringify(mockUser));
-    localStorage.setItem('lastActive', Date.now().toString());
-    
-    // Clear form
-    document.getElementById('loginForm').reset();
-    
-    // Show welcome screen
-    showWelcomeScreen();
-    
-    setTimeout(() => {
-        hideWelcomeScreen();
-        showChatApp();
-        loadChats();
-        showToast(`Welcome back, ${mockUser.username}!`, 'success');
-    }, 3000);
+    // Check if Firebase is enabled
+    if (typeof FirebaseService !== 'undefined') {
+        // Use Firebase Authentication
+        try {
+            const user = await FirebaseService.signIn(email, password);
+            
+            // Get user data from Firebase
+            const userData = await FirebaseService.get(`users/${user.uid}`);
+            
+            state.currentUser = {
+                id: user.uid,
+                email: user.email,
+                username: userData?.username || email.split('@')[0],
+                avatar: userData?.avatar || generateAvatarUrl(email)
+            };
+            
+            // Clear form
+            document.getElementById('loginForm').reset();
+            
+            // Show welcome screen
+            showWelcomeScreen();
+            
+            setTimeout(() => {
+                hideWelcomeScreen();
+                showChatApp();
+                loadChats();
+                showToast(`Welcome back, ${state.currentUser.username}!`, 'success');
+            }, 3000);
+            
+        } catch (error) {
+            console.error('Login error:', error);
+            showToast(error.message || 'Invalid email or password', 'error');
+        }
+    } else {
+        // Fallback to localStorage mode
+        const mockUser = {
+            id: Date.now(),
+            email: email,
+            username: email.split('@')[0],
+            avatar: generateAvatarUrl(email)
+        };
+        
+        state.currentUser = mockUser;
+        localStorage.setItem('currentUser', JSON.stringify(mockUser));
+        localStorage.setItem('lastActive', Date.now().toString());
+        
+        document.getElementById('loginForm').reset();
+        showWelcomeScreen();
+        
+        setTimeout(() => {
+            hideWelcomeScreen();
+            showChatApp();
+            loadChats();
+            showToast(`Welcome back, ${mockUser.username}!`, 'success');
+        }, 3000);
+    }
 }
 
-function handleSignup(e) {
+async function handleSignup(e) {
     e.preventDefault();
     const username = document.getElementById('signupUsername').value;
     const email = document.getElementById('signupEmail').value;
@@ -234,39 +303,70 @@ function handleSignup(e) {
         return;
     }
     
-    // Simulate signup
-    const mockUser = {
-        id: Date.now(),
-        email: email,
-        username: username,
-        avatar: generateAvatarUrl(email)
-    };
-    
-    state.currentUser = mockUser;
-    
-    // Always save to localStorage for persistent login
-    localStorage.setItem('currentUser', JSON.stringify(mockUser));
-    localStorage.setItem('lastActive', Date.now().toString());
-    
-    // Create user profile in storage
-    localStorage.setItem(`user_${mockUser.id}`, JSON.stringify({
-        username: username,
-        bio: '',
-        avatar: mockUser.avatar
-    }));
-    
-    document.getElementById('signupForm').reset();
-    document.getElementById('signupPasswordStrength').innerHTML = '';
-    
-    // Show welcome screen
-    showWelcomeScreen();
-    
-    setTimeout(() => {
-        hideWelcomeScreen();
-        showChatApp();
-        loadChats();
-        showToast(`Welcome to ModernChat, ${username}!`, 'success');
-    }, 3000);
+    // Check if Firebase is enabled
+    if (typeof FirebaseService !== 'undefined') {
+        // Use Firebase Authentication
+        try {
+            const user = await FirebaseService.signUp(email, password, username);
+            
+            state.currentUser = {
+                id: user.uid,
+                email: user.email,
+                username: username,
+                avatar: generateAvatarUrl(email)
+            };
+            
+            // Save to localStorage as backup
+            localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
+            
+            // Clear forms
+            document.getElementById('signupForm').reset();
+            document.getElementById('signupPasswordStrength').innerHTML = '';
+            
+            // Show welcome screen
+            showWelcomeScreen();
+            
+            setTimeout(() => {
+                hideWelcomeScreen();
+                showChatApp();
+                loadChats();
+                showToast(`Welcome to ModernChat, ${username}!`, 'success');
+            }, 3000);
+            
+        } catch (error) {
+            console.error('Signup error:', error);
+            showToast(error.message || 'Failed to create account', 'error');
+        }
+    } else {
+        // Fallback to localStorage mode
+        const mockUser = {
+            id: Date.now(),
+            email: email,
+            username: username,
+            avatar: generateAvatarUrl(email)
+        };
+        
+        state.currentUser = mockUser;
+        localStorage.setItem('currentUser', JSON.stringify(mockUser));
+        localStorage.setItem('lastActive', Date.now().toString());
+        
+        localStorage.setItem(`user_${mockUser.id}`, JSON.stringify({
+            username: username,
+            bio: '',
+            avatar: mockUser.avatar
+        }));
+        
+        document.getElementById('signupForm').reset();
+        document.getElementById('signupPasswordStrength').innerHTML = '';
+        showWelcomeScreen();
+        
+        setTimeout(() => {
+            hideWelcomeScreen();
+            showChatApp();
+            loadChats();
+            showToast(`Welcome to ModernChat, ${username}!`, 'success');
+        }, 3000);
+    }
 }
 
 function validateEmail(email) {
@@ -586,10 +686,66 @@ function openChat(chat) {
 
 function loadMessages(chat) {
     const messagesArea = document.getElementById('messagesArea');
+    if (!messagesArea) return; // Safety check
+    
+    // Clear previous messages
     messagesArea.innerHTML = '';
     
-    // Load messages from chat object or storage
-    let messages = chat.messages || [];
+    // Check if Firebase is enabled and chat has an ID
+    if (typeof FirebaseService !== 'undefined' && chat.id) {
+        // Use Firebase real-time listener
+        console.log('Setting up real-time listener for chat:', chat.id);
+        
+        // Listen for real-time messages
+        try {
+            FirebaseService.onMessages(chat.id, (messages) => {
+                messagesArea.innerHTML = '';
+                
+                if (!messages || messages.length === 0) {
+                    messagesArea.innerHTML = `
+                        <div class="empty-chat">
+                            <i class="fas fa-comments"></i>
+                            <h2>Start a conversation</h2>
+                            <p>Type a message below to start chatting with ${chat.name}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Sort messages by timestamp
+                const sortedMessages = messages.sort((a, b) => {
+                    const timeA = new Date(a.timestamp).getTime() || 0;
+                    const timeB = new Date(b.timestamp).getTime() || 0;
+                    return timeA - timeB;
+                });
+                
+                // Display all messages
+                sortedMessages.forEach(message => {
+                    if (message && message.text) {
+                        const isSent = message.userId === state.currentUser?.id;
+                        addMessageToChat(message.text, message.timestamp, isSent);
+                    }
+                });
+                
+                // Scroll to bottom
+                setTimeout(() => {
+                    messagesArea.scrollTop = messagesArea.scrollHeight;
+                }, 100);
+            });
+        } catch (error) {
+            console.error('Error setting up real-time listener:', error);
+            // Fall back to local storage
+            loadMessagesLocal(chat);
+        }
+    } else {
+        // Use local storage
+        loadMessagesLocal(chat);
+    }
+}
+
+function loadMessagesLocal(chat) {
+    const messagesArea = document.getElementById('messagesArea');
+    let messages = Array.isArray(chat.messages) ? chat.messages : [];
     
     if (messages.length === 0) {
         messagesArea.innerHTML = `
@@ -602,12 +758,17 @@ function loadMessages(chat) {
         return;
     }
     
+    // Display all messages
     messages.forEach(message => {
-        addMessageToChat(message.text, message.timestamp, message.sent);
+        if (message && message.text) {
+            addMessageToChat(message.text, message.timestamp, message.sent);
+        }
     });
     
     // Scroll to bottom
-    messagesArea.scrollTop = messagesArea.scrollHeight;
+    setTimeout(() => {
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+    }, 100);
 }
 
 function escapeHtml(text) {
@@ -623,6 +784,8 @@ function escapeHtml(text) {
 
 function addMessageToChat(text, timestamp, sent = false) {
     const messagesArea = document.getElementById('messagesArea');
+    if (!messagesArea) return; // Safety check
+    
     const messageDiv = document.createElement('div');
     messageDiv.className = `message-bubble ${sent ? 'sent' : 'received'}`;
     
@@ -653,7 +816,7 @@ function addMessageToChat(text, timestamp, sent = false) {
 // MESSAGING
 // ============================================
 
-function sendMessage() {
+async function sendMessage() {
     const input = document.getElementById('messageInput');
     if (!input) return;
     
@@ -664,41 +827,81 @@ function sendMessage() {
         return;
     }
     
-    const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    const messageObj = { text: message, timestamp: timestamp, sent: true };
+    const timestamp = new Date().toISOString();
+    const displayTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     
-    // Initialize messages array if it doesn't exist
-    if (!state.activeChat.messages) {
-        state.activeChat.messages = [];
-    }
-    
-    // Add message to chat
-    state.activeChat.messages.push(messageObj);
-    state.activeChat.lastMessage = message;
-    state.activeChat.timestamp = timestamp;
-    
-    // Update in chats array
-    const chatIndex = state.chats.findIndex(c => c.id === state.activeChat.id);
-    if (chatIndex !== -1) {
-        state.chats[chatIndex] = state.activeChat;
-    }
-    
-    saveChatsToStorage();
-    renderChats();
-    
-    addMessageToChat(message, timestamp, true);
-    
-    input.value = '';
-    autoExpandTextarea(input);
-    
-    // Play sound if enabled
-    if (state.settings.soundEffects) {
-        playNotificationSound();
-    }
-    
-    // Send notification if enabled
-    if (state.settings.desktopNotifications) {
-        sendDesktopNotification('Message sent', 'Your message has been delivered');
+    // Check if Firebase is enabled
+    if (typeof FirebaseService !== 'undefined' && state.activeChat.id) {
+        // Use Firebase real-time messaging
+        try {
+            await FirebaseService.sendMessage(
+                state.activeChat.id,
+                state.currentUser?.id,
+                message,
+                timestamp,
+                true
+            );
+            
+            // Update UI immediately
+            addMessageToChat(message, displayTime, true);
+            
+            input.value = '';
+            autoExpandTextarea(input);
+            
+            // Play sound if enabled
+            if (state.settings.soundEffects) {
+                playNotificationSound();
+            }
+            
+            // Send notification if enabled
+            if (state.settings.desktopNotifications) {
+                sendDesktopNotification('Message sent', 'Your message has been delivered');
+            }
+            
+        } catch (error) {
+            console.error('Send message error:', error);
+            showToast('Failed to send message', 'error');
+        }
+    } else {
+        // Fallback to localStorage mode
+        const messageObj = { text: message, timestamp: displayTime, sent: true };
+        
+        // Initialize messages array if it doesn't exist
+        if (!state.activeChat.messages) {
+            state.activeChat.messages = [];
+        }
+        
+        // Add message to chat
+        state.activeChat.messages.push(messageObj);
+        state.activeChat.lastMessage = message;
+        state.activeChat.timestamp = displayTime;
+        
+        // Update in chats array
+        const chatIndex = state.chats.findIndex(c => c.id === state.activeChat.id);
+        if (chatIndex !== -1) {
+            state.chats[chatIndex] = state.activeChat;
+        } else {
+            state.chats.push(state.activeChat);
+        }
+        
+        saveChatsToStorage();
+        renderChats();
+        
+        // Add message to UI
+        addMessageToChat(message, displayTime, true);
+        
+        input.value = '';
+        autoExpandTextarea(input);
+        
+        // Play sound if enabled
+        if (state.settings.soundEffects) {
+            playNotificationSound();
+        }
+        
+        // Send notification if enabled
+        if (state.settings.desktopNotifications) {
+            sendDesktopNotification('Message sent', 'Your message has been delivered');
+        }
     }
 }
 
@@ -1038,16 +1241,54 @@ function loadSettings() {
     }
     
     // Apply settings to UI
-    document.getElementById('themeMode').value = state.settings.theme;
-    document.getElementById('accentColor').value = state.settings.accentColor;
-    document.getElementById('accentColorValue').textContent = state.settings.accentColor;
-    document.getElementById('fontSize').value = state.settings.fontSize;
-    document.getElementById('fontSizeValue').textContent = state.settings.fontSize + 'px';
-    document.getElementById('desktopNotifications').checked = state.settings.desktopNotifications;
-    document.getElementById('soundEffects').checked = state.settings.soundEffects;
-    document.getElementById('emailNotifications').checked = state.settings.emailNotifications;
-    document.getElementById('lastSeen').checked = state.settings.lastSeen;
-    document.getElementById('readReceipts').checked = state.settings.readReceipts;
+    if (document.getElementById('themeMode')) {
+        document.getElementById('themeMode').value = state.settings.theme;
+    }
+    if (document.getElementById('accentColor')) {
+        document.getElementById('accentColor').value = state.settings.accentColor;
+    }
+    if (document.getElementById('accentColorValue')) {
+        document.getElementById('accentColorValue').textContent = state.settings.accentColor;
+    }
+    if (document.getElementById('fontSize')) {
+        document.getElementById('fontSize').value = state.settings.fontSize;
+    }
+    if (document.getElementById('fontSizeValue')) {
+        document.getElementById('fontSizeValue').textContent = state.settings.fontSize + 'px';
+    }
+    if (document.getElementById('desktopNotifications')) {
+        document.getElementById('desktopNotifications').checked = state.settings.desktopNotifications;
+    }
+    if (document.getElementById('soundEffects')) {
+        document.getElementById('soundEffects').checked = state.settings.soundEffects;
+    }
+    if (document.getElementById('emailNotifications')) {
+        document.getElementById('emailNotifications').checked = state.settings.emailNotifications;
+    }
+    if (document.getElementById('lastSeen')) {
+        document.getElementById('lastSeen').checked = state.settings.lastSeen;
+    }
+    if (document.getElementById('readReceipts')) {
+        document.getElementById('readReceipts').checked = state.settings.readReceipts;
+    }
+}
+
+// Mobile compatibility check
+function checkMobileCompatibility() {
+    const isMobile = window.innerWidth <= 768;
+    const isTouchDevice = 'ontouchstart' in window;
+    
+    console.log('📱 Mobile Compatibility Check:');
+    console.log('- Screen width:', window.innerWidth);
+    console.log('- Is mobile screen:', isMobile);
+    console.log('- Is touch device:', isTouchDevice);
+    console.log('- User Agent:', navigator.userAgent);
+    
+    if (isMobile && !isTouchDevice) {
+        console.warn('⚠️ Mobile width but not touch device - might be desktop mode');
+    }
+    
+    return { isMobile, isTouchDevice, width: window.innerWidth };
 }
 
 function saveSettings() {
@@ -1354,11 +1595,25 @@ function saveAllUserData() {
         // Save settings
         saveSettings();
         
-        console.log('All user data saved successfully');
+        console.log('All user data saved to localStorage');
     } catch (e) {
         console.error('Failed to save user data:', e);
         showToast('Failed to save data', 'error');
     }
+}
+
+// Show data storage info (for mobile debugging)
+function showStorageInfo() {
+    const info = {
+        'Storage Used': (new Blob([JSON.stringify(localStorage)]).size / 1024).toFixed(2) + ' KB',
+        'Contacts': state.contacts.length,
+        'Chats': state.chats.length,
+        'Messages Total': state.chats.reduce((sum, chat) => sum + (chat.messages?.length || 0), 0)
+    };
+    
+    console.log('📊 Data Storage Info:', info);
+    console.log('💾 localStorage keys:', Object.keys(localStorage));
+    alert('Storage Info:\n' + Object.entries(info).map(([k, v]) => `${k}: ${v}`).join('\n'));
 }
 
 // Export all user data as JSON file

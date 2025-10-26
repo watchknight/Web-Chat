@@ -1,0 +1,22 @@
+# VS Code settings
+.vscode/
+*.code-workspace
+
+# OS files
+.DS_Store
+AppData/
+Desktop.ini
+
+# System files
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+
+# Keep only your project files
+# Your actual project files will be added
+
