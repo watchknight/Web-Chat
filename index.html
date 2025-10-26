@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ModernChat">
+    <title>ModernChat - Interactive Chat Application</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-content">
+            <div class="logo-animation">
+                <i class="fas fa-comments"></i>
+            </div>
+            <h1>ModernChat</h1>
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Container -->
+    <div id="auth-container" class="auth-container hidden">
+        <div class="auth-background">
+            <div class="particles"></div>
+            <div class="gradient-orb orb-1"></div>
+            <div class="gradient-orb orb-2"></div>
+            <div class="gradient-orb orb-3"></div>
+        </div>
+        
+        <div class="auth-box">
+            <div class="auth-header">
+                <div class="logo">
+                    <i class="fas fa-comments"></i>
+                    <span>ModernChat</span>
+                </div>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form" class="auth-form active">
+                <h2>Welcome Back</h2>
+                <p class="subtitle">Sign in to continue chatting</p>
+                
+                <form id="loginForm" autocomplete="off">
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="loginEmail" placeholder="Email address" required autocomplete="email">
+                        <span class="input-focus"></span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <span class="input-focus"></span>
+                    </div>
+
+                    <div class="input-row">
+                        <label class="checkbox-container" style="display: none;">
+                            <input type="checkbox" id="rememberMe" checked>
+                            <span class="checkmark"></span>
+                            Keep me logged in
+                        </label>
+                        <a href="#" class="forgot-password">Forgot password?</a>
+                    </div>
+
+                    <div class="password-strength" id="passwordStrength"></div>
+
+                    <button type="submit" class="btn-primary">
+                        <span>Sign In</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+
+                <div class="divider">
+                    <span>or</span>
+                </div>
+
+                <div class="social-login">
+                    <button class="social-btn google">
+                        <i class="fab fa-google"></i>
+                        Continue with Google
+                    </button>
+                    <button class="social-btn github">
+                        <i class="fab fa-github"></i>
+                        Continue with GitHub
+                    </button>
+                </div>
+
+                <p class="switch-form">
+                    Don't have an account? 
+                    <a href="#" onclick="switchAuth('signup')">Sign Up</a>
+                </p>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signup-form" class="auth-form">
+                <h2>Create Account</h2>
+                <p class="subtitle">Join thousands of users today</p>
+                
+                <form id="signupForm" autocomplete="off">
+                    <div class="input-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="signupUsername" placeholder="Username" required autocomplete="username">
+                        <span class="input-focus"></span>
+                    </div>
+
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="signupEmail" placeholder="Email address" required autocomplete="email">
+                        <span class="input-focus"></span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="signupPassword" placeholder="Password" required autocomplete="new-password" onkeyup="checkPasswordStrength(this.value)">
+                        <button type="button" class="password-toggle" onclick="togglePassword('signupPassword')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <span class="input-focus"></span>
+                    </div>
+
+                    <div class="password-strength" id="signupPasswordStrength"></div>
+
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required autocomplete="new-password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('signupConfirmPassword')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <span class="input-focus"></span>
+                    </div>
+
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="agreeTerms" required>
+                        <span class="checkmark"></span>
+                        I agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a>
+                    </label>
+
+                    <button type="submit" class="btn-primary">
+                        <span>Create Account</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+
+                <div class="divider">
+                    <span>or</span>
+                </div>
+
+                <div class="social-login">
+                    <button class="social-btn google">
+                        <i class="fab fa-google"></i>
+                        Continue with Google
+                    </button>
+                    <button class="social-btn github">
+                        <i class="fab fa-github"></i>
+                        Continue with GitHub
+                    </button>
+                </div>
+
+                <p class="switch-form">
+                    Already have an account? 
+                    <a href="#" onclick="switchAuth('login')">Sign In</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="welcome-screen hidden">
+        <div class="welcome-content">
+            <div class="welcome-animation">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h1>Welcome, <span id="welcomeName"></span>!</h1>
+            <p>Your profile is being set up...</p>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Application -->
+    <div id="chat-app" class="chat-app hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="user-profile" onclick="openProfileModal()">
+                    <div class="avatar-container">
+                        <img id="userAvatar" src="" alt="User Avatar">
+                        <span class="status-indicator online"></span>
+                    </div>
+                    <div class="user-info">
+                        <h3 id="userName"></h3>
+                        <p id="userStatus">Online</p>
+                    </div>
+                </div>
+                <button class="btn-icon" onclick="toggleSidebar()" title="Toggle Sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="chatSearch" placeholder="Search conversations...">
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('chats')">
+                    <i class="fas fa-comments"></i>
+                    <span>Chats</span>
+                </button>
+                <button class="tab" onclick="switchTab('contacts')">
+                    <i class="fas fa-users"></i>
+                    <span>Contacts</span>
+                </button>
+                <button class="tab" onclick="switchTab('groups')">
+                    <i class="fas fa-user-friends"></i>
+                    <span>Groups</span>
+                </button>
+            </div>
+
+            <!-- Chats List -->
+            <div id="chats-tab" class="tab-content active">
+                <div class="chats-list" id="chatsList">
+                    <!-- Chats will be populated here -->
+                </div>
+            </div>
+
+            <!-- Contacts List -->
+            <div id="contacts-tab" class="tab-content">
+                <div class="contacts-list" id="contactsList">
+                    <!-- Contacts will be populated here -->
+                </div>
+            </div>
+
+            <!-- Groups List -->
+            <div id="groups-tab" class="tab-content">
+                <div class="groups-list" id="groupsList">
+                    <!-- Groups will be populated here -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <div class="chat-main">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="chat-info">
+                    <div class="chat-avatar">
+                        <img id="activeChatAvatar" src="" alt="Chat Avatar">
+                        <span class="status-indicator online" id="activeChatStatus"></span>
+                    </div>
+                    <div class="chat-details">
+                        <h2 id="activeChatName">Select a chat to start</h2>
+                        <p id="activeChatStatusText">Choose a conversation</p>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button class="btn-icon" onclick="searchInChat()" title="Search">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button class="btn-icon" onclick="openChatInfo()" title="Chat Info">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
+                    <button class="btn-icon" onclick="openSettings()" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Area -->
+            <div class="messages-area" id="messagesArea">
+                <div class="empty-chat">
+                    <i class="fas fa-comments"></i>
+                    <h2>No conversation selected</h2>
+                    <p>Choose a chat from the sidebar to start messaging</p>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="typing-indicator hidden" id="typingIndicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+
+            <!-- Message Input -->
+            <div class="message-input-container">
+                <button class="btn-icon emoji-btn" onclick="toggleEmojiPicker()" title="Emoji">
+                    <i class="far fa-smile"></i>
+                </button>
+                <button class="btn-icon attachment-btn" onclick="openFileUpload()" title="Attach File">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <textarea 
+                    id="messageInput" 
+                    placeholder="Type a message..." 
+                    rows="1"
+                    onkeypress="handleInputKeyPress(event)"
+                    oninput="autoExpandTextarea(this)"></textarea>
+                <button class="btn-primary send-btn" onclick="sendMessage()" title="Send">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emoji Picker -->
+    <div class="emoji-picker hidden" id="emojiPicker">
+        <div class="emoji-picker-header">
+            <h3>Emoji</h3>
+            <button class="btn-icon" onclick="toggleEmojiPicker()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="emoji-search">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search emoji..." id="emojiSearch">
+        </div>
+        <div class="emoji-categories">
+            <button class="emoji-category active" data-category="smileys">
+                <i class="far fa-smile"></i>
+            </button>
+            <button class="emoji-category" data-category="people">
+                <i class="fas fa-users"></i>
+            </button>
+            <button class="emoji-category" data-category="animals">
+                <i class="fas fa-cat"></i>
+            </button>
+            <button class="emoji-category" data-category="food">
+                <i class="fas fa-utensils"></i>
+            </button>
+            <button class="emoji-category" data-category="activities">
+                <i class="fas fa-futbol"></i>
+            </button>
+            <button class="emoji-category" data-category="travel">
+                <i class="fas fa-plane"></i>
+            </button>
+            <button class="emoji-category" data-category="objects">
+                <i class="fas fa-lightbulb"></i>
+            </button>
+        </div>
+        <div class="emoji-grid" id="emojiGrid">
+            <!-- Emojis will be populated here -->
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content settings-modal">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="btn-icon" onclick="closeSettings()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-tabs">
+                    <button class="settings-tab active" onclick="openSettingsTab('profile')">
+                        <i class="fas fa-user"></i> Profile
+                    </button>
+                    <button class="settings-tab" onclick="openSettingsTab('theme')">
+                        <i class="fas fa-palette"></i> Theme
+                    </button>
+                    <button class="settings-tab" onclick="openSettingsTab('notifications')">
+                        <i class="fas fa-bell"></i> Notifications
+                    </button>
+                    <button class="settings-tab" onclick="openSettingsTab('privacy')">
+                        <i class="fas fa-shield-alt"></i> Privacy
+                    </button>
+                </div>
+
+                <div id="settings-content">
+                    <!-- Profile Tab -->
+                    <div class="settings-section" id="profile-tab">
+                        <h3>Profile Information</h3>
+                        <div class="avatar-upload">
+                            <img id="profileAvatar" src="" alt="Profile Avatar">
+                            <button class="btn-secondary" onclick="changeAvatar()">
+                                <i class="fas fa-camera"></i> Change Avatar
+                            </button>
+                        </div>
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="profileUsername">
+                        </div>
+                        <div class="form-group">
+                            <label>Bio</label>
+                            <textarea id="profileBio" rows="3" placeholder="Tell us about yourself..."></textarea>
+                        </div>
+                        <button class="btn-primary" onclick="saveProfile()">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+
+                    <!-- Theme Tab -->
+                    <div class="settings-section hidden" id="theme-tab">
+                        <h3>Theme Customization</h3>
+                        <div class="theme-option">
+                            <label>Theme Mode</label>
+                            <select id="themeMode">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="auto">Auto (System)</option>
+                            </select>
+                        </div>
+                        <div class="theme-option">
+                            <label>Accent Color</label>
+                            <div class="color-picker">
+                                <input type="color" id="accentColor" value="#007bff">
+                                <span id="accentColorValue">#007bff</span>
+                            </div>
+                        </div>
+                        <div class="theme-option">
+                            <label>Font Size</label>
+                            <input type="range" id="fontSize" min="14" max="20" value="16">
+                            <span id="fontSizeValue">16px</span>
+                        </div>
+                        <button class="btn-primary" onclick="applyTheme()">
+                            <i class="fas fa-check"></i> Apply Theme
+                        </button>
+                    </div>
+
+                    <!-- Notifications Tab -->
+                    <div class="settings-section hidden" id="notifications-tab">
+                        <h3>Notification Preferences</h3>
+                        <div class="setting-item">
+                            <div>
+                                <h4>Desktop Notifications</h4>
+                                <p>Get notified when someone sends you a message</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="desktopNotifications">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <div>
+                                <h4>Sound Effects</h4>
+                                <p>Play sounds when receiving messages</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="soundEffects">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <div>
+                                <h4>Email Notifications</h4>
+                                <p>Receive email updates about your account</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="emailNotifications">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Privacy Tab -->
+                    <div class="settings-section hidden" id="privacy-tab">
+                        <h3>Privacy Settings</h3>
+                        <div class="setting-item">
+                            <div>
+                                <h4>Last Seen</h4>
+                                <p>Show when you were last online</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="lastSeen" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <div>
+                                <h4>Read Receipts</h4>
+                                <p>Let others know when you've read their messages</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="readReceipts" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div style="margin-top: 1.5rem;">
+                            <button class="btn-secondary" onclick="manualLogout()" style="width: 100%; margin-bottom: 0.5rem;">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
+                        </div>
+                        <div class="setting-item" style="padding: 1rem 0; border-top: 1px solid var(--border-color);">
+                            <h4 style="margin-bottom: 0.5rem;">Data Management</h4>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                                Backup and restore your chat data
+                            </p>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <button class="btn-secondary" onclick="exportUserData()" style="width: 100%;">
+                                    <i class="fas fa-download"></i> Export Data
+                                </button>
+                                <button class="btn-secondary" onclick="triggerDataImport()" style="width: 100%;">
+                                    <i class="fas fa-upload"></i> Import Data
+                                </button>
+                            </div>
+                        </div>
+                        <button class="btn-danger" onclick="deleteAccount()" style="width: 100%;">
+                            <i class="fas fa-trash"></i> Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div class="modal hidden" id="shortcutsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Keyboard Shortcuts</h2>
+                <button class="btn-icon" onclick="toggleShortcuts()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcuts-list">
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">Ctrl/Cmd + K</span>
+                        <span class="shortcut-desc">Search conversations</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">Ctrl/Cmd + N</span>
+                        <span class="shortcut-desc">New message</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">Ctrl/Cmd + ,</span>
+                        <span class="shortcut-desc">Open settings</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-key">?</span>
+                        <span class="shortcut-desc">Show this menu</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Contact Modal -->
+    <div class="modal hidden" id="addContactModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Contact</h2>
+                <button class="btn-icon" onclick="closeAddContactModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Contact Name</label>
+                    <input type="text" id="contactNameInput" placeholder="Enter contact's name" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="contactEmailInput" placeholder="Enter email address" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label style="margin-bottom: 0.5rem;">Status</label>
+                    <select id="contactStatusInput">
+                        <option value="online">Online</option>
+                        <option value="offline">Offline</option>
+                    </select>
+                </div>
+                <div style="margin-top: 1.5rem;">
+                    <button class="btn-primary" onclick="addContact()" style="width: 100%;">
+                        <i class="fas fa-user-plus"></i> Add Contact
+                    </button>
+                </div>
+                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                    <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Or Share Your Link</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                        Share this link with others so they can add you as a contact
+                    </p>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="myContactLink" readonly style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-secondary);">
+                        <button class="btn-secondary" onclick="copyMyContactLink()">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
